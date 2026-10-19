@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>무선마이크 찾기</title>
+<style>
+:root{--bg:#f6f7f9;--card:#fff;--fg:#14161a;--mut:#666c75;--line:#e2e5ea;--acc:#ff5a1f;--ok:#1a9b5a;--warn:#b26a00;--warnbg:#fff4e0}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1114;--card:#1a1d22;--fg:#eef0f3;--mut:#9aa1ab;--line:#2b3038;--acc:#ff7a45;--ok:#3cc982;--warn:#ffb648;--warnbg:#2e2412}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif;padding:12px 16px 40px}
+h1{font-size:20px;margin:4px 0 12px}
+.tabs{display:flex;gap:8px;margin-bottom:12px}
+.tabs button{flex:1;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);font-size:15px;font-weight:600}
+.tabs button.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+label{display:block;font-size:13px;color:var(--mut);margin:10px 0 4px}
+select,input[type=text]{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);font-size:15px}
+input[type=range]{width:100%}
+.btn{width:100%;padding:16px;border:0;border-radius:14px;background:var(--acc);color:#fff;font-size:18px;font-weight:700;margin-top:12px}
+.btn.stop{background:#555}
+.warn{background:var(--warnbg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:14px;margin-top:10px}
+.hint{font-size:13px;color:var(--mut)}
+.big{font-size:96px;font-weight:800;text-align:center;line-height:1;margin:8px 0 0;font-variant-numeric:tabular-nums}
+.phrase{text-align:center;font-size:20px;font-weight:700;margin:6px 0 10px}
+.bar{height:18px;border-radius:9px;background:var(--line);overflow:hidden}
+.bar>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3b82f6,#22c55e,#eab308,#ef4444);transition:width .15s}
+canvas{width:100%;height:110px;display:block;margin-top:10px}
+.row{display:flex;justify-content:space-between;font-size:14px;color:var(--mut);margin-top:6px}
+.tones{display:flex;gap:6px;margin-top:8px}
+.tones span{flex:1;text-align:center;font-size:12px;padding:6px 2px;border-radius:8px;background:var(--bg);font-variant-numeric:tabular-nums}
+ul.dev{list-style:none;padding:0;margin:8px 0 0;max-height:320px;overflow:auto}
+ul.dev li{padding:10px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+ul.dev li.sel{background:var(--warnbg)}
+.hidden{display:none}
+ol{padding-left:20px;margin:6px 0}
+</style>
+</head>
+<body>
+<h1>🎤 무선마이크 찾기</h1>
+<div class="tabs">
+  <button id="tSound" class="on">🔊 소리로 찾기</button>
+  <button id="tBle">📶 블루투스로 찾기</button>
+</div>
+
+<!-- 공통 측정 화면 -->
+<div class="card">
+  <div class="big" id="val">0</div>
+  <div class="phrase" id="phrase">❄️ 멀다 → 🔥 바로 옆!</div>
+  <div class="bar"><i id="barFill"></i></div>
+  <canvas id="graph"></canvas>
+  <div class="row"><span id="status">대기 중</span><span>최고 <b id="best">0</b></span></div>
+</div>
+
+<!-- 소리 탭 -->
+<div id="pSound">
+  <div class="card">
+    <div class="warn"><b>⚠️ 강의장 스피커로 소리가 나가지 않게:</b>
+      <ol>
+        <li>수신기가 강의장 믹서/앰프에 연결돼 있으면 <b>믹서에서 그 마이크 채널을 뮤트</b>(또는 페이더 0)하세요.</li>
+        <li>수신기의 <b>다른 출력</b>(헤드폰·라인 단자 등)을 케이블/어댑터로 폰에 연결하세요.</li>
+        <li>아래 모드는 기본이 <b>무소음(초음파)</b>입니다. 사람 귀에는 거의 안 들립니다.</li>
+      </ol>
+    </div>
+    <label>탐지음 모드</label>
+    <select id="mode">
+      <option value="ultra" selected>🤫 무소음 · 초음파 18~19.4kHz (기본)</option>
+      <option value="high">🤏 거의 안 들림 · 15~17kHz (초음파가 안 잡힐 때)</option>
+      <option value="normal">🔔 일반 · 2.7~5.1kHz (잘 들림, 빈 강의실용)</option>
+      <option value="listen">👂 듣기만 · 소리 안 냄 (입력 레벨만 표시)</option>
+    </select>
+    <label>입력 장치 (마이크 수신기)</label>
+    <select id="dev"><option value="">시작하면 목록이 나옵니다</option></select>
+    <div id="builtinWarn" class="warn hidden">내장 마이크로 잡힌 것 같아요. 수신기를 연결하고 장치를 다시 고르세요.</div>
+    <label>폰 스피커 볼륨 <span id="volT">40%</span></label>
+    <input type="range" id="vol" min="0" max="100" value="40">
+    <label>감도 (만점 기준 SNR) <span id="fsT">45dB</span></label>
+    <input type="range" id="fs" min="15" max="60" value="45">
+    <div class="tones" id="tones"></div>
+    <div class="row"><span>입력 레벨</span><span id="lvl">– dB</span></div>
+    <button class="btn" id="sBtn">시작</button>
+    <p class="hint">원리: 폰이 송신기에 가까울수록 송신기가 탐지음을 크게 듣고, 그 소리가 수신기를 거쳐 다시 폰으로 들어옵니다. 송신기 전원이 켜져 있어야 합니다.<br>
+    초음파 모드에서 숫자가 안 오르면 송신기가 높은 음을 잘라내는 기종일 수 있어요 → "거의 안 들림" 모드로 바꾸세요.<br>
+    아이폰에서 수신기를 USB 오디오로 꽂으면 소리 출력이 폰 스피커 대신 수신기로 갈 수 있어요. 그땐 탐지음이 안 나오니 3.5mm 입력 어댑터를 쓰세요.</p>
+  </div>
+</div>
+
+<!-- 블루투스 탭 -->
+<div id="pBle" class="hidden">
+  <div class="card">
+    <p class="hint" style="margin-top:0">블루투스 기능이 있는 송신기(예: 일부 DJI/Rode 제품)만 찾을 수 있어요. 일반 강의장 UHF 무선마이크는 블루투스가 없으니 "소리로 찾기"를 쓰세요. 안드로이드 Chrome 전용.</p>
+    <label>이름 필터</label>
+    <input type="text" id="flt" placeholder="예: DJI, Rode, Mic">
+    <button class="btn" id="bBtn">주변 장치 검색</button>
+    <div id="bleMsg" class="warn hidden"></div>
+    <ul class="dev" id="devList"></ul>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+// ---------- 공통 표시 ----------
+let hist=[],best=0,wake=null,lastVib=0;
+function phrase(v){return v>=85?'🔥 바로 옆!':v>=65?'♨️ 아주 가까움':v>=45?'🌤️ 가까워지는 중':v>=20?'🌥️ 조금 멂':'❄️ 멀다'}
+function show(v){
+  v=Math.max(0,Math.min(100,Math.round(v)));
+  $('val').textContent=v;$('phrase').textContent=phrase(v);$('barFill').style.width=v+'%';
+  if(v>best){best=v;$('best').textContent=best}
+  hist.push(v);if(hist.length>150)hist.shift();draw();
+  if(v>=85&&navigator.vibrate&&Date.now()-lastVib>600){navigator.vibrate(120);lastVib=Date.now()}
+}
+function draw(){
+  const c=$('graph'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
+  if(c.width!==w*d){c.width=w*d;c.height=h*d}
+  const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);g.clearRect(0,0,w,h);
+  g.strokeStyle=getComputedStyle(document.body).getPropertyValue('--line');g.beginPath();
+  for(const y of [.25,.5,.75]){g.moveTo(0,h*y);g.lineTo(w,h*y)}g.stroke();
+  if(hist.length<2)return;
+  g.strokeStyle=getComputedStyle(document.body).getPropertyValue('--acc');g.lineWidth=2.5;g.beginPath();
+  hist.forEach((v,i)=>{const x=i/(150-1)*w,y=h-(v/100)*h;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke();
+}
+function resetShow(){hist=[];best=0;$('best').textContent=0;show(0);hist=[];draw()}
+async function lockScreen(){try{if('wakeLock' in navigator)wake=await navigator.wakeLock.request('screen')}catch(e){}}
+function unlockScreen(){try{wake&&wake.release()}catch(e){}wake=null}
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(audioOn||bleOn))lockScreen()});
+// 탭
+function tab(s){$('tSound').classList.toggle('on',s);$('tBle').classList.toggle('on',!s);$('pSound').classList.toggle('hidden',!s);$('pBle').classList.toggle('hidden',s)}
+$('tSound').onclick=()=>tab(true);$('tBle').onclick=()=>tab(false);
+
+// ---------- 소리로 찾기 ----------
+const MODES={ultra:[18000,18700,19400],high:[15200,16100,17000],normal:[2700,3900,5100],listen:[]};
+let ctx,stream,src,an,master,oscs=[],audioOn=false,raf,ema=0,buf;
+$('vol').oninput=()=>{$('volT').textContent=$('vol').value+'%';if(master)master.gain.setTargetAtTime(gainFor(),ctx.currentTime,.05)};
+$('fs').oninput=()=>{$('fsT').textContent=$('fs').value+'dB'};
+function gainFor(){return ($('vol').value/100)*0.3}
+const RX=/usb|dji|rode|wireless|receiver|rx|shure|sennheiser|lav|mic.*(ext|외부)|외부|line|헤드셋|headset|lightning|type-c/i;
+const BUILTIN=/built-in|내장|default|기본|iphone|internal|phone|bottom|front|back/i;
+async function listDevices(){
+  const all=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='audioinput');
+  const sel=$('dev'),cur=sel.value;sel.innerHTML='';
+  all.forEach((d,i)=>{const o=document.createElement('option');o.value=d.deviceId;o.textContent=d.label||('마이크 '+(i+1));sel.appendChild(o)});
+  if(cur&&all.some(d=>d.deviceId===cur))sel.value=cur;
+  else{const r=all.find(d=>RX.test(d.label)&&!/built-in|내장/i.test(d.label));if(r)sel.value=r.deviceId}
+  return all;
+}
+function checkBuiltin(){
+  const t=stream&&stream.getAudioTracks()[0];const lab=t?t.label:'';
+  $('builtinWarn').classList.toggle('hidden',!(lab&&BUILTIN.test(lab)&&!RX.test(lab)));
+}
+async function openMic(id){
+  if(stream)stream.getTracks().forEach(t=>t.stop());
+  stream=await navigator.mediaDevices.getUserMedia({audio:{deviceId:id?{exact:id}:undefined,echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+  if(src)src.disconnect();
+  src=ctx.createMediaStreamSource(stream);src.connect(an);checkBuiltin();
+}
+function startTones(){
+  stopTones();
+  const fr=MODES[$('mode').value].filter(f=>f<ctx.sampleRate/2-500);
+  master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
+  fr.forEach(f=>{const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;const g=ctx.createGain();g.gain.value=1/Math.max(1,fr.length);o.connect(g).connect(master);o.start();oscs.push(o)});
+  // 서서히 키워서 '틱' 소리 방지
+  master.gain.setTargetAtTime(gainFor(),ctx.currentTime,.15);
+  $('tones').innerHTML=fr.map((f,i)=>`<span id="tn${i}">${(f/1000).toFixed(1)}k<br>–</span>`).join('');
+  return fr;
+}
+function stopTones(){
+  if(master){const m=master,os=oscs;m.gain.setTargetAtTime(0,ctx.currentTime,.05);setTimeout(()=>{os.forEach(o=>{try{o.stop()}catch(e){}});m.disconnect()},300)}
+  oscs=[];master=null;
+}
+let freqs=[];
+function loop(){
+  an.getFloatFrequencyData(buf);
+  // 입력 레벨(대략): 전체 bin 최대
+  let mx=-200;for(let i=4;i<buf.length;i++)if(buf[i]>mx)mx=buf[i];
+  $('lvl').textContent=isFinite(mx)?mx.toFixed(0)+' dB':'– dB';
+  if(freqs.length){
+    const bw=ctx.sampleRate/an.fftSize;let sum=0;
+    freqs.forEach((f,k)=>{
+      const b=Math.round(f/bw);let pk=-200;
+      for(let i=b-2;i<=b+2;i++)if(buf[i]>pk)pk=buf[i];
+      const nb=[];for(let i=b-40;i<=b+40;i++){const o=Math.abs(i-b);if(o>=12&&i>0&&i<buf.length)nb.push(buf[i])}
+      nb.sort((a,b)=>a-b);const med=nb[nb.length>>1];
+      const snr=Math.max(0,pk-med);sum+=snr;
+      const el=$('tn'+k);if(el)el.innerHTML=`${(f/1000).toFixed(1)}k<br>${snr.toFixed(0)}dB`;
+    });
+    const avg=sum/freqs.length;ema=0.85*ema+0.15*avg;
+    show(ema/(+$('fs').value)*100);
+  }else{
+    // 듣기만 모드: 입력 레벨을 -90~-20dB → 0~100
+    const v=(mx+90)/70*100;ema=0.85*ema+0.15*v;show(ema);
+  }
+  raf=requestAnimationFrame(loop);
+}
+async function startSound(){
+  try{
+    ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+    await ctx.resume();
+    an=ctx.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;buf=new Float32Array(an.frequencyBinCount);
+    await openMic($('dev').value||undefined);
+    await listDevices();
+    // 자동 선택된 수신기가 지금 장치와 다르면 다시 열기
+    const t=stream.getAudioTracks()[0].getSettings().deviceId;
+    if($('dev').value&&$('dev').value!==t)await openMic($('dev').value);
+    freqs=startTones();ema=0;resetShow();audioOn=true;lockScreen();
+    $('sBtn').textContent='정지';$('sBtn').classList.add('stop');
+    $('status').textContent=freqs.length?'측정 중 (탐지음 '+(($('mode').value==='normal')?'재생':'무음 재생')+')':'듣는 중 (소리 없음)';
+    loop();
+  }catch(e){$('status').textContent='오류: '+e.message;alert('마이크를 열 수 없어요: '+e.message+'\nhttps 주소인지, 마이크 권한을 허용했는지 확인하세요.');stopSound()}
+}
+function stopSound(){
+  cancelAnimationFrame(raf);stopTones();
+  if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;
+  if(ctx)setTimeout(()=>{try{ctx.close()}catch(e){}ctx=null},400);
+  audioOn=false;unlockScreen();$('sBtn').textContent='시작';$('sBtn').classList.remove('stop');$('status').textContent='정지됨';
+}
+$('sBtn').onclick=()=>audioOn?stopSound():startSound();
+$('dev').onchange=async()=>{if(audioOn){try{await openMic($('dev').value)}catch(e){alert(e.message)}}};
+$('mode').onchange=()=>{if(audioOn){freqs=startTones();ema=0;resetShow();$('status').textContent=freqs.length?'측정 중':'듣는 중 (소리 없음)'}};
+if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener)navigator.mediaDevices.addEventListener('devicechange',()=>{if(audioOn)listDevices()});
+
+// ---------- 블루투스로 찾기 ----------
+let bleOn=false,scan=null,devs=new Map(),target=null,bleEma=null,watched=null;
+function rssiTo(r){return (r+100)/65*100}
+function bleMsg(t){const m=$('bleMsg');m.classList.toggle('hidden',!t);m.innerHTML=t||''}
+function render(){
+  const f=$('flt').value.trim().toLowerCase();
+  const arr=[...devs.values()].filter(d=>!f||(d.name||'').toLowerCase().includes(f)).sort((a,b)=>b.rssi-a.rssi);
+  $('devList').innerHTML=arr.map(d=>`<li data-id="${d.id}" class="${target===d.id?'sel':''}"><span>${d.name?d.name.replace(/</g,'&lt;'):'(이름 없음)'}</span><b>${d.rssi} dBm</b></li>`).join('');
+}
+$('flt').oninput=render;
+$('devList').onclick=e=>{const li=e.target.closest('li');if(!li)return;target=li.dataset.id;bleEma=null;resetShow();$('status').textContent='추적 중: '+(devs.get(target).name||target.slice(0,8));render()};
+function onAdv(ev){
+  const id=ev.device.id,name=ev.device.name||ev.name||'';
+  devs.set(id,{id,name,rssi:ev.rssi,t:Date.now()});
+  if(target===id){bleEma=bleEma==null?ev.rssi:0.7*bleEma+0.3*ev.rssi;show(rssiTo(bleEma))}
+  render();
+}
+async function startBle(){
+  bleMsg('');
+  if(!navigator.bluetooth){bleMsg('이 브라우저는 웹 블루투스를 지원하지 않아요. 안드로이드 Chrome에서 열어주세요. (아이폰 Safari/Chrome은 미지원)');return}
+  try{
+    if(navigator.bluetooth.requestLEScan){
+      scan=await navigator.bluetooth.requestLEScan({acceptAllAdvertisements:true,keepRepeatedDevices:true});
+      navigator.bluetooth.addEventListener('advertisementreceived',onAdv);
+      $('status').textContent='주변 장치 검색 중 — 목록에서 눌러 추적';
+    }else{
+      const d=await navigator.bluetooth.requestDevice({acceptAllDevices:true});
+      if(!d.watchAdvertisements)throw new Error('watchAdvertisements 미지원');
+      d.addEventListener('advertisementreceived',onAdv);await d.watchAdvertisements();watched=d;
+      target=d.id;devs.set(d.id,{id:d.id,name:d.name,rssi:-100});render();
+      $('status').textContent='추적 중: '+(d.name||'장치');
+    }
+    bleOn=true;lockScreen();resetShow();$('bBtn').textContent='정지';$('bBtn').classList.add('stop');
+  }catch(e){
+    if(e.name==='NotFoundError'){bleMsg('장치 선택이 취소됐어요.');return}
+    bleMsg('블루투스 스캔을 쓸 수 없어요 ('+e.message+').<br>Chrome 주소창에 <b>chrome://flags</b> 입력 → <b>Experimental Web Platform features</b> 를 Enabled로 바꾸고 Chrome을 다시 시작하세요. 위치(GPS)와 블루투스도 켜 두세요.');
+  }
+}
+function stopBle(){
+  try{scan&&scan.stop()}catch(e){}scan=null;
+  try{navigator.bluetooth&&navigator.bluetooth.removeEventListener('advertisementreceived',onAdv)}catch(e){}
+  try{watched&&watched.unwatchAdvertisements&&watched.unwatchAdvertisements()}catch(e){}watched=null;
+  bleOn=false;unlockScreen();$('bBtn').textContent='주변 장치 검색';$('bBtn').classList.remove('stop');$('status').textContent='정지됨';
+}
+$('bBtn').onclick=()=>bleOn?stopBle():startBle();
+draw();
+</script>
+</body>
+</html>
