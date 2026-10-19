@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<title>무선마이크 찾기</title>
+<title>무선마이크 찾기 · 탐지음 없음</title>
 <style>
 :root{--bg:#f6f7f9;--card:#fff;--fg:#14161a;--mut:#666c75;--line:#e2e5ea;--acc:#ff5a1f;--ok:#1a9b5a;--warn:#b26a00;--warnbg:#fff4e0}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1114;--card:#1a1d22;--fg:#eef0f3;--mut:#9aa1ab;--line:#2b3038;--acc:#ff7a45;--ok:#3cc982;--warn:#ffb648;--warnbg:#2e2412}}
@@ -38,16 +38,17 @@ ol{padding-left:20px;margin:6px 0}
 </style>
 </head>
 <body>
-<h1>🎤 무선마이크 찾기</h1>
+<h1>🎤 무선마이크 찾기 <small style="font-size:12px;color:var(--ok)">탐지음 없음 · v2</small></h1>
+<div class="card"><b>강의장 마이크라면 먼저 확인하세요</b><p class="hint">일반 UHF/VHF 무선마이크는 폰의 블루투스 검색으로 찾을 수 없습니다. 이 페이지도 폰만으로 해당 전파나 위치를 측정할 수 없습니다.</p><ol class="hint"><li>담당자에게 해당 마이크의 <b>믹서 채널을 뮤트</b>해 달라고 하세요. 수신기 전원은 켜 둡니다.</li><li>수신기의 RF/안테나 표시로 송신 신호 수신 여부를 확인하세요. 신호가 있어도 위치가 확정되지는 않습니다.</li><li>휴대 가능한 수신기는 전원과 안테나를 유지한 채 이동하며 RF 표시를 비교할 수 있습니다. 고정 수신기라면 장비를 임의로 분리하지 말고 담당자 도움을 받으세요.</li></ol><p class="hint">송신기 전원이 꺼졌거나 배터리가 없으면 실시간 전파 탐색은 불가능합니다. <a href="https://www.shure.com/en-US/docs/guide/QLXD" target="_blank" rel="noopener">수신기 RF 표시 설명 (Shure 예시)</a></p></div>
 <div class="tabs">
-  <button id="tSound" class="on">🔊 소리로 찾기</button>
+  <button id="tSound" class="on">👂 수신기 입력 확인</button>
   <button id="tBle">📶 블루투스로 찾기</button>
 </div>
 
 <!-- 공통 측정 화면 -->
 <div class="card">
-  <div class="big" id="val">0</div>
-  <div class="phrase" id="phrase">❄️ 멀다 → 🔥 바로 옆!</div>
+  <div class="hint" id="metricLabel" style="text-align:center">입력 크기 · 거리 측정 아님</div><div class="big" id="val">—</div>
+  <div class="phrase" id="phrase">수신기를 연결해 주세요</div>
   <div class="bar"><i id="barFill"></i></div>
   <canvas id="graph"></canvas>
   <div class="row"><span id="status">대기 중</span><span>최고 <b id="best">0</b></span></div>
@@ -56,40 +57,21 @@ ol{padding-left:20px;margin:6px 0}
 <!-- 소리 탭 -->
 <div id="pSound">
   <div class="card">
-    <div class="warn"><b>⚠️ 강의장 스피커로 소리가 나가지 않게:</b>
-      <ol>
-        <li>수신기가 강의장 믹서/앰프에 연결돼 있으면 <b>믹서에서 그 마이크 채널을 뮤트</b>(또는 페이더 0)하세요.</li>
-        <li>수신기의 <b>다른 출력</b>(헤드폰·라인 단자 등)을 케이블/어댑터로 폰에 연결하세요.</li>
-        <li>아래 모드는 기본이 <b>무소음(초음파)</b>입니다. 사람 귀에는 거의 안 들립니다.</li>
-      </ol>
-    </div>
-    <label>탐지음 모드</label>
-    <select id="mode">
-      <option value="ultra" selected>🤫 무소음 · 초음파 18~19.4kHz (기본)</option>
-      <option value="high">🤏 거의 안 들림 · 15~17kHz (초음파가 안 잡힐 때)</option>
-      <option value="normal">🔔 일반 · 2.7~5.1kHz (잘 들림, 빈 강의실용)</option>
-      <option value="listen">👂 듣기만 · 소리 안 냄 (입력 레벨만 표시)</option>
-    </select>
+    <div class="warn"><b>이 페이지는 소리를 재생하지 않습니다.</b><br>단, 실제 강의장 스피커 연결은 웹에서 제어할 수 없습니다. 폰을 연결하기 전에 담당자에게 해당 믹서 채널의 메인·보조·모니터 출력을 뮤트해 달라고 하세요. 초음파도 무소음이 보장되지 않아 재생 기능을 제거했습니다.</div>
+    <label style="color:var(--fg);font-size:15px"><input type="checkbox" id="muted"> 담당자가 해당 채널의 스피커 출력을 뮤트한 것을 확인했습니다</label>
     <label>입력 장치 (마이크 수신기)</label>
     <select id="dev"><option value="">시작하면 목록이 나옵니다</option></select>
-    <div id="builtinWarn" class="warn hidden">내장 마이크로 잡힌 것 같아요. 수신기를 연결하고 장치를 다시 고르세요.</div>
-    <label>폰 스피커 볼륨 <span id="volT">40%</span></label>
-    <input type="range" id="vol" min="0" max="100" value="40">
-    <label>감도 (만점 기준 SNR) <span id="fsT">45dB</span></label>
-    <input type="range" id="fs" min="15" max="60" value="45">
-    <div class="tones" id="tones"></div>
+    <div id="builtinWarn" class="warn hidden">수신기 입력인지 확인되지 않았습니다. 내장 마이크일 수 있어요. 외부 수신기를 연결하고 입력 장치 이름을 확인하세요.</div>
     <div class="row"><span>입력 레벨</span><span id="lvl">– dB</span></div>
     <button class="btn" id="sBtn">시작</button>
-    <p class="hint">원리: 폰이 송신기에 가까울수록 송신기가 탐지음을 크게 듣고, 그 소리가 수신기를 거쳐 다시 폰으로 들어옵니다. 송신기 전원이 켜져 있어야 합니다.<br>
-    초음파 모드에서 숫자가 안 오르면 송신기가 높은 음을 잘라내는 기종일 수 있어요 → "거의 안 들림" 모드로 바꾸세요.<br>
-    아이폰에서 수신기를 USB 오디오로 꽂으면 소리 출력이 폰 스피커 대신 수신기로 갈 수 있어요. 그땐 탐지음이 안 나오니 3.5mm 입력 어댑터를 쓰세요.</p>
+    <p class="hint">수신기의 별도 출력을 폰에서 지원하는 USB 오디오 인터페이스 또는 적절한 입력 어댑터로 연결해야 합니다. 일반 충전 케이블이나 출력 전용 젠더로는 입력되지 않습니다.<br>숫자는 입력 소리 크기이며 거리·RF 세기가 아닙니다. 폰의 내장 마이크가 선택됐다면 잃어버린 송신기의 소리가 아닙니다. 입력이 커져도 가까워졌다고 판단할 수 없습니다. 이 모드에서는 진동하지 않습니다.</p>
   </div>
 </div>
 
 <!-- 블루투스 탭 -->
 <div id="pBle" class="hidden">
   <div class="card">
-    <p class="hint" style="margin-top:0">블루투스 기능이 있는 송신기(예: 일부 DJI/Rode 제품)만 찾을 수 있어요. 일반 강의장 UHF 무선마이크는 블루투스가 없으니 "소리로 찾기"를 쓰세요. 안드로이드 Chrome 전용.</p>
+    <p class="hint" style="margin-top:0">블루투스 기능이 있는 송신기(예: 일부 DJI/Rode 제품)만 찾을 수 있어요. 일반 강의장 UHF/VHF 무선마이크는 이 검색으로 찾을 수 없습니다. 블루투스 광고를 실제로 내보내는 송신기만 대상입니다. 안드로이드 Chrome 전용.</p>
     <label>이름 필터</label>
     <input type="text" id="flt" placeholder="예: DJI, Rode, Mic">
     <button class="btn" id="bBtn">주변 장치 검색</button>
@@ -105,10 +87,10 @@ let hist=[],best=0,wake=null,lastVib=0;
 function phrase(v){return v>=85?'🔥 바로 옆!':v>=65?'♨️ 아주 가까움':v>=45?'🌤️ 가까워지는 중':v>=20?'🌥️ 조금 멂':'❄️ 멀다'}
 function show(v){
   v=Math.max(0,Math.min(100,Math.round(v)));
-  $('val').textContent=v;$('phrase').textContent=phrase(v);$('barFill').style.width=v+'%';
+  $('val').textContent=v;$('phrase').textContent=audioOn?'입력 크기 · 거리 아님':phrase(v);$('barFill').style.width=v+'%';
   if(v>best){best=v;$('best').textContent=best}
   hist.push(v);if(hist.length>150)hist.shift();draw();
-  if(v>=85&&navigator.vibrate&&Date.now()-lastVib>600){navigator.vibrate(120);lastVib=Date.now()}
+  if(bleOn&&v>=85&&navigator.vibrate&&Date.now()-lastVib>600){navigator.vibrate(120);lastVib=Date.now()}
 }
 function draw(){
   const c=$('graph'),d=devicePixelRatio||1,w=c.clientWidth,h=c.clientHeight;
@@ -125,15 +107,11 @@ async function lockScreen(){try{if('wakeLock' in navigator)wake=await navigator.
 function unlockScreen(){try{wake&&wake.release()}catch(e){}wake=null}
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'&&(audioOn||bleOn))lockScreen()});
 // 탭
-function tab(s){$('tSound').classList.toggle('on',s);$('tBle').classList.toggle('on',!s);$('pSound').classList.toggle('hidden',!s);$('pBle').classList.toggle('hidden',s)}
+function tab(s){stopSound();stopBle();resetShow();$('val').textContent='—';$('phrase').textContent=s?'수신기를 연결해 주세요':'장치를 선택해 주세요';$('metricLabel').textContent=s?'입력 크기 · 거리 측정 아님':'블루투스 상대 신호 · 거리 보장 없음';$('tSound').classList.toggle('on',s);$('tBle').classList.toggle('on',!s);$('pSound').classList.toggle('hidden',!s);$('pBle').classList.toggle('hidden',s)}
 $('tSound').onclick=()=>tab(true);$('tBle').onclick=()=>tab(false);
 
 // ---------- 소리로 찾기 ----------
-const MODES={ultra:[18000,18700,19400],high:[15200,16100,17000],normal:[2700,3900,5100],listen:[]};
-let ctx,stream,src,an,master,oscs=[],audioOn=false,raf,ema=0,buf;
-$('vol').oninput=()=>{$('volT').textContent=$('vol').value+'%';if(master)master.gain.setTargetAtTime(gainFor(),ctx.currentTime,.05)};
-$('fs').oninput=()=>{$('fsT').textContent=$('fs').value+'dB'};
-function gainFor(){return ($('vol').value/100)*0.3}
+let ctx,stream,src,an,audioOn=false,raf,ema=0,buf,starting=false;
 const RX=/usb|dji|rode|wireless|receiver|rx|shure|sennheiser|lav|mic.*(ext|외부)|외부|line|헤드셋|headset|lightning|type-c/i;
 const BUILTIN=/built-in|내장|default|기본|iphone|internal|phone|bottom|front|back/i;
 async function listDevices(){
@@ -146,7 +124,7 @@ async function listDevices(){
 }
 function checkBuiltin(){
   const t=stream&&stream.getAudioTracks()[0];const lab=t?t.label:'';
-  $('builtinWarn').classList.toggle('hidden',!(lab&&BUILTIN.test(lab)&&!RX.test(lab)));
+  $('builtinWarn').classList.toggle('hidden',!(!lab||!RX.test(lab)||BUILTIN.test(lab)));
 }
 async function openMic(id){
   if(stream)stream.getTracks().forEach(t=>t.stop());
@@ -154,70 +132,41 @@ async function openMic(id){
   if(src)src.disconnect();
   src=ctx.createMediaStreamSource(stream);src.connect(an);checkBuiltin();
 }
-function startTones(){
-  stopTones();
-  const fr=MODES[$('mode').value].filter(f=>f<ctx.sampleRate/2-500);
-  master=ctx.createGain();master.gain.value=0;master.connect(ctx.destination);
-  fr.forEach(f=>{const o=ctx.createOscillator();o.type='sine';o.frequency.value=f;const g=ctx.createGain();g.gain.value=1/Math.max(1,fr.length);o.connect(g).connect(master);o.start();oscs.push(o)});
-  // 서서히 키워서 '틱' 소리 방지
-  master.gain.setTargetAtTime(gainFor(),ctx.currentTime,.15);
-  $('tones').innerHTML=fr.map((f,i)=>`<span id="tn${i}">${(f/1000).toFixed(1)}k<br>–</span>`).join('');
-  return fr;
-}
-function stopTones(){
-  if(master){const m=master,os=oscs;m.gain.setTargetAtTime(0,ctx.currentTime,.05);setTimeout(()=>{os.forEach(o=>{try{o.stop()}catch(e){}});m.disconnect()},300)}
-  oscs=[];master=null;
-}
-let freqs=[];
 function loop(){
-  an.getFloatFrequencyData(buf);
-  // 입력 레벨(대략): 전체 bin 최대
-  let mx=-200;for(let i=4;i<buf.length;i++)if(buf[i]>mx)mx=buf[i];
-  $('lvl').textContent=isFinite(mx)?mx.toFixed(0)+' dB':'– dB';
-  if(freqs.length){
-    const bw=ctx.sampleRate/an.fftSize;let sum=0;
-    freqs.forEach((f,k)=>{
-      const b=Math.round(f/bw);let pk=-200;
-      for(let i=b-2;i<=b+2;i++)if(buf[i]>pk)pk=buf[i];
-      const nb=[];for(let i=b-40;i<=b+40;i++){const o=Math.abs(i-b);if(o>=12&&i>0&&i<buf.length)nb.push(buf[i])}
-      nb.sort((a,b)=>a-b);const med=nb[nb.length>>1];
-      const snr=Math.max(0,pk-med);sum+=snr;
-      const el=$('tn'+k);if(el)el.innerHTML=`${(f/1000).toFixed(1)}k<br>${snr.toFixed(0)}dB`;
-    });
-    const avg=sum/freqs.length;ema=0.85*ema+0.15*avg;
-    show(ema/(+$('fs').value)*100);
-  }else{
-    // 듣기만 모드: 입력 레벨을 -90~-20dB → 0~100
-    const v=(mx+90)/70*100;ema=0.85*ema+0.15*v;show(ema);
-  }
-  raf=requestAnimationFrame(loop);
+  if(!audioOn||!an)return;
+  an.getFloatTimeDomainData(buf);
+  let power=0;for(const sample of buf)power+=sample*sample;
+  const db=20*Math.log10(Math.sqrt(power/buf.length)||1e-8);
+  $('lvl').textContent=db.toFixed(0)+' dBFS';
+  const value=Math.max(0,Math.min(100,(db+90)/70*100));
+  ema=0.85*ema+0.15*value;show(ema);raf=requestAnimationFrame(loop);
 }
 async function startSound(){
+  if(starting)return;
+  if(!$('muted').checked){$('status').textContent='先に担当者の確認をお願いします'.replace('先に担当者の確認をお願いします','먼저 담당자에게 해당 믹서 채널 뮤트를 확인해 주세요');return}
+  starting=true;$('sBtn').disabled=true;
   try{
+    if(!navigator.mediaDevices?.getUserMedia)throw new Error('HTTPS와 마이크 지원 브라우저가 필요합니다');
     ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
-    await ctx.resume();
-    an=ctx.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;buf=new Float32Array(an.frequencyBinCount);
-    await openMic($('dev').value||undefined);
-    await listDevices();
-    // 자동 선택된 수신기가 지금 장치와 다르면 다시 열기
-    const t=stream.getAudioTracks()[0].getSettings().deviceId;
-    if($('dev').value&&$('dev').value!==t)await openMic($('dev').value);
-    freqs=startTones();ema=0;resetShow();audioOn=true;lockScreen();
-    $('sBtn').textContent='정지';$('sBtn').classList.add('stop');
-    $('status').textContent=freqs.length?'측정 중 (탐지음 '+(($('mode').value==='normal')?'재생':'무음 재생')+')':'듣는 중 (소리 없음)';
-    loop();
-  }catch(e){$('status').textContent='오류: '+e.message;alert('마이크를 열 수 없어요: '+e.message+'\nhttps 주소인지, 마이크 권한을 허용했는지 확인하세요.');stopSound()}
+    await ctx.resume();an=ctx.createAnalyser();an.fftSize=8192;an.smoothingTimeConstant=0;buf=new Float32Array(an.fftSize);
+    await openMic($('dev').value||undefined);await listDevices();
+    const id=stream.getAudioTracks()[0].getSettings().deviceId;
+    if($('dev').value&&$('dev').value!==id)await openMic($('dev').value);
+    audioOn=true;ema=0;resetShow();lockScreen();
+    $('sBtn').textContent='정지';$('sBtn').classList.add('stop');$('status').textContent='입력 확인 중 · 출력 소리 없음';loop();
+  }catch(e){stopSound();$('status').textContent='입력 불가: '+e.message}
+  finally{starting=false;$('sBtn').disabled=false}
 }
 function stopSound(){
-  cancelAnimationFrame(raf);stopTones();
-  if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;
-  if(ctx)setTimeout(()=>{try{ctx.close()}catch(e){}ctx=null},400);
-  audioOn=false;unlockScreen();$('sBtn').textContent='시작';$('sBtn').classList.remove('stop');$('status').textContent='정지됨';
+  cancelAnimationFrame(raf);if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;
+  if(src)src.disconnect();src=null;an=null;
+  const old=ctx;ctx=null;if(old)old.close().catch(()=>{});
+  audioOn=false;unlockScreen();$('sBtn').textContent='시작';$('sBtn').classList.remove('stop');
 }
 $('sBtn').onclick=()=>audioOn?stopSound():startSound();
-$('dev').onchange=async()=>{if(audioOn){try{await openMic($('dev').value)}catch(e){alert(e.message)}}};
-$('mode').onchange=()=>{if(audioOn){freqs=startTones();ema=0;resetShow();$('status').textContent=freqs.length?'측정 중':'듣는 중 (소리 없음)'}};
-if(navigator.mediaDevices&&navigator.mediaDevices.addEventListener)navigator.mediaDevices.addEventListener('devicechange',()=>{if(audioOn)listDevices()});
+$('muted').onchange=()=>{if(!$('muted').checked)stopSound()};
+$('dev').onchange=async()=>{if(audioOn){try{await openMic($('dev').value)}catch(e){stopSound();$('status').textContent=e.message}}};
+if(navigator.mediaDevices?.addEventListener)navigator.mediaDevices.addEventListener('devicechange',()=>{if(audioOn)listDevices().catch(()=>{})});
 
 // ---------- 블루투스로 찾기 ----------
 let bleOn=false,scan=null,devs=new Map(),target=null,bleEma=null,watched=null;
@@ -231,7 +180,7 @@ function render(){
 $('flt').oninput=render;
 $('devList').onclick=e=>{const li=e.target.closest('li');if(!li)return;target=li.dataset.id;bleEma=null;resetShow();$('status').textContent='추적 중: '+(devs.get(target).name||target.slice(0,8));render()};
 function onAdv(ev){
-  const id=ev.device.id,name=ev.device.name||ev.name||'';
+  if(!Number.isFinite(ev.rssi))return;const id=ev.device.id,name=ev.device.name||ev.name||'';
   devs.set(id,{id,name,rssi:ev.rssi,t:Date.now()});
   if(target===id){bleEma=bleEma==null?ev.rssi:0.7*bleEma+0.3*ev.rssi;show(rssiTo(bleEma))}
   render();
@@ -248,10 +197,10 @@ async function startBle(){
       const d=await navigator.bluetooth.requestDevice({acceptAllDevices:true});
       if(!d.watchAdvertisements)throw new Error('watchAdvertisements 미지원');
       d.addEventListener('advertisementreceived',onAdv);await d.watchAdvertisements();watched=d;
-      target=d.id;devs.set(d.id,{id:d.id,name:d.name,rssi:-100});render();
+      target=d.id;devs.set(d.id,{id:d.id,name:d.name,rssi:-100,t:Date.now()});render();
       $('status').textContent='추적 중: '+(d.name||'장치');
     }
-    bleOn=true;lockScreen();resetShow();$('bBtn').textContent='정지';$('bBtn').classList.add('stop');
+    bleOn=true;bleEma=null;lockScreen();resetShow();$('val').textContent='—';$('phrase').textContent='신호 수신 대기';$('bBtn').textContent='정지';$('bBtn').classList.add('stop');
   }catch(e){
     if(e.name==='NotFoundError'){bleMsg('장치 선택이 취소됐어요.');return}
     bleMsg('블루투스 스캔을 쓸 수 없어요 ('+e.message+').<br>Chrome 주소창에 <b>chrome://flags</b> 입력 → <b>Experimental Web Platform features</b> 를 Enabled로 바꾸고 Chrome을 다시 시작하세요. 위치(GPS)와 블루투스도 켜 두세요.');
@@ -263,7 +212,9 @@ function stopBle(){
   try{watched&&watched.unwatchAdvertisements&&watched.unwatchAdvertisements()}catch(e){}watched=null;
   bleOn=false;unlockScreen();$('bBtn').textContent='주변 장치 검색';$('bBtn').classList.remove('stop');$('status').textContent='정지됨';
 }
-$('bBtn').onclick=()=>bleOn?stopBle():startBle();
+$('bBtn').onclick=async()=>{if(bleOn){stopBle();return} $('bBtn').disabled=true;try{await startBle()}finally{$('bBtn').disabled=false}};
+setInterval(()=>{if(!bleOn)return;const now=Date.now();for(const [id,d] of devs){if(now-d.t>15000)devs.delete(id)}if(target&&!devs.has(target)){$('val').textContent='—';$('phrase').textContent='신호 없음 · 위치 판단 불가';$('barFill').style.width='0%';$('status').textContent='최근 15초간 광고 신호 없음'}render()},1000);
+window.addEventListener('pagehide',()=>{stopSound();stopBle()});
 draw();
 </script>
 </body>
