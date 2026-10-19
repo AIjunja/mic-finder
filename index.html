@@ -143,7 +143,7 @@ function loop(){
 }
 async function startSound(){
   if(starting)return;
-  if(!$('muted').checked){$('status').textContent='先に担当者の確認をお願いします'.replace('先に担当者の確認をお願いします','먼저 담당자에게 해당 믹서 채널 뮤트를 확인해 주세요');return}
+  if(!$('muted').checked){$('status').textContent='먼저 담당자에게 해당 믹서 채널 뮤트를 확인해 주세요';return}
   starting=true;$('sBtn').disabled=true;
   try{
     if(!navigator.mediaDevices?.getUserMedia)throw new Error('HTTPS와 마이크 지원 브라우저가 필요합니다');
